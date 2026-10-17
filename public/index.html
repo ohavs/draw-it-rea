@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Draw It! 🎨 משחק הציורים והדירוגים</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Floating ambient background blobs -->
+  <div class="bg-decor">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- Top Navigation / Status Header -->
+  <header class="app-header">
+    <div class="brand" id="brandLogo" title="Draw It - Reconstructed with REA">
+      <span class="brand-icon">🎨</span>
+      <div class="brand-text">
+        <h1>Draw It!</h1>
+        <span class="brand-sub">זירת הציורים והדירוגים</span>
+      </div>
+    </div>
+
+    <div class="header-meta" id="headerRoomBadge" hidden>
+      <div class="pill room-pill">
+        <span class="pill-label">קוד חדר:</span>
+        <strong id="headerRoomCode">DRAW</strong>
+        <button class="btn-icon-small" id="copyInviteBtn" title="העתק קישור הזמנה לחברים">📋 העתק קישור</button>
+      </div>
+      <div class="pill round-pill" id="headerRoundBadge" hidden>
+        <span>סיבוב <strong id="headerRoundNum">1</strong></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="main-container">
+
+    <!-- ==================== 1. ENTRY / JOIN SCREEN ==================== -->
+    <section id="screenJoin" class="screen active">
+      <div class="card hero-card">
+        <div class="hero-badge">✨ Multiplayer Party Game</div>
+        <h2 class="hero-title">ברוכים הבאים ל-<span>Draw It!</span></h2>
+        <p class="hero-desc">
+          היכנסו ללובי עם חברים (או שחקני AI), קבלו נושא בהפתעה, ציירו אותו תוך 30–60 שניות, ובסיום הסיבוב צפו בגלריית הציורים של כולם ותנו ציונים!
+        </p>
+
+        <div class="form-group">
+          <label for="playerNameInput">השם שלך במשחק</label>
+          <input type="text" id="playerNameInput" maxlength="20" placeholder="למשל: לאונרדו דה וינצ'י..." autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label>בחר אווטאר</label>
+          <div class="avatar-grid" id="avatarPicker"></div>
+        </div>
+
+        <div class="join-split">
+          <div class="join-box">
+            <h3>כניסה ללובי מהיר / קוד חדר</h3>
+            <div class="code-input-row">
+              <input type="text" id="roomCodeInput" maxlength="6" placeholder="קוד (למשל DRAW)" value="DRAW" />
+              <button class="btn btn-primary" id="joinRoomBtn">🚀 כניסה ללובי</button>
+            </div>
+          </div>
+
+          <div class="divider-or"><span>או</span></div>
+
+          <div class="join-box">
+            <h3>פתיחת חדר פרטי חדש</h3>
+            <button class="btn btn-secondary btn-full" id="createRoomBtn">✨ צור לובי חדש</button>
+          </div>
+        </div>
+
+        <div class="active-rooms-box" id="activeRoomsSection">
+          <div class="section-mini-title">חדרים פעילים כעת:</div>
+          <div id="activeRoomsList" class="active-rooms-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2. LOBBY SCREEN ==================== -->
+    <section id="screenLobby" class="screen" hidden>
+      <div class="lobby-layout">
+        <!-- Left/Main column: Players in Lobby -->
+        <div class="card lobby-players-card">
+          <div class="card-header-row">
+            <div>
+              <h2>👥 שחקנים בלובי (<span id="lobbyPlayerCount">1</span>)</h2>
+              <p class="muted-text">שתפו את קוד החדר או הוסיפו בוטים כדי להתחרות מולם!</p>
+            </div>
+            <button class="btn btn-outline-accent" id="addBotBtn">🤖 + הוסף בוט מצייר</button>
+          </div>
+
+          <div id="lobbyPlayersGrid" class="players-grid"></div>
+
+          <div class="invite-banner">
+            <div>
+              <strong>רוצים להזמין חברים או לפתוח טאב נוסף לבדיקה?</strong>
+              <p>כל מי שנכנס עם הקוד <code id="lobbyBannerCode">DRAW</code> מצטרף מיד ללובי הזה.</p>
+            </div>
+            <div class="invite-actions">
+              <button class="btn btn-small btn-secondary" id="openSecondTabBtn" title="פותח חלון משחק נוסף לבדיקה מהירה">➕ פתח שחקן נוסף בטאב חדש</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column: Game Settings & Start Controls -->
+        <div class="card lobby-settings-card">
+          <h2>⚙️ הגדרות סיבוב</h2>
+
+          <div class="setting-block">
+            <div class="setting-label-row">
+              <label for="durationSlider">⏱️ זמן לציור:</label>
+              <span class="duration-value"><strong id="durationLabel">45</strong> שניות</span>
+            </div>
+            <input type="range" id="durationSlider" min="30" max="60" step="5" value="45" />
+            <div class="range-ticks">
+              <span>30 שנ׳ (מהיר ⚡)</span>
+              <span>45 שנ׳ (קלאסי 🎨)</span>
+              <span>60 שנ׳ (מושקע 🖼️)</span>
+            </div>
+          </div>
+
+          <div class="setting-block">
+            <label>🎯 בחירת נושא לציור (או השאירו להגרלה אוטומטית):</label>
+            <div id="promptChoicesContainer" class="prompt-choices"></div>
+            <input type="text" id="customPromptInput" maxlength="40" placeholder="או הקלידו נושא משלכם כאן..." />
+          </div>
+
+          <div class="lobby-start-footer">
+            <button class="btn btn-primary btn-XL" id="startGameBtn">
+              🎬 התחל סיבוב ציור!
+            </button>
+            <p id="hostWaitNotice" class="muted-text center-text" hidden>
+              ממתין למנהל החדר שיתחיל את המשחק...
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. DRAWING SCREEN ==================== -->
+    <section id="screenDrawing" class="screen" hidden>
+      <!-- Top Prompt & Countdown Bar -->
+      <div class="drawing-top-bar card">
+        <div class="prompt-banner">
+          <span class="prompt-category" id="drawPromptCategory">נושא לציור 🎨</span>
+          <div class="prompt-main-word">
+            <span id="drawPromptIcon">🌟</span>
+            <h2 id="drawPromptText">חתול חלל עם קסדה</h2>
+          </div>
+        </div>
+
+        <div class="timer-widget" id="timerWidget">
+          <div class="timer-ring-wrap">
+            <svg class="timer-svg" viewBox="0 0 60 60">
+              <circle class="timer-bg" cx="30" cy="30" r="26"></circle>
+              <circle class="timer-progress" id="timerCircle" cx="30" cy="30" r="26"></circle>
+            </svg>
+            <span class="timer-number" id="timerSeconds">45</span>
+          </div>
+          <div class="timer-meta">
+            <span>שניות נותרו</span>
+            <div class="submitted-counter" id="submittedCounter">0/2 סיימו</div>
+          </div>
+        </div>
+
+        <div class="drawing-top-actions">
+          <button class="btn btn-success btn-finish-draw" id="submitDrawingBtn">
+            ✅ סיימתי לצייר!
+          </button>
+        </div>
+      </div>
+
+      <!-- Canvas + Toolbar Workspace -->
+      <div class="drawing-workspace">
+        <!-- Tools Sidebar / Bar -->
+        <div class="toolbar card">
+          <div class="tool-section">
+            <span class="tool-section-label">כלים</span>
+            <div class="tool-buttons">
+              <button class="tool-btn active" data-tool="pen" title="מכחול ציור">🖌️ מכחול</button>
+              <button class="tool-btn" data-tool="fill" title="מילוי רקע">🪣 רקע</button>
+              <button class="tool-btn" data-tool="eraser" title="מחק">🧽 מחק</button>
+            </div>
+          </div>
+
+          <div class="tool-section">
+            <span class="tool-section-label">צבעים</span>
+            <div class="color-palette" id="colorPalette"></div>
+          </div>
+
+          <div class="tool-section">
+            <span class="tool-section-label">עובי קו</span>
+            <div class="size-selector" id="sizeSelector"></div>
+          </div>
+
+          <div class="tool-section tool-actions-row">
+            <button class="tool-action-btn" id="undoBtn" title="בטל פעולה אחרונה">↩️ בטל</button>
+            <button class="tool-action-btn danger" id="clearCanvasBtn" title="נקה הכל">🗑️ נקה</button>
+          </div>
+        </div>
+
+        <!-- Drawing Canvas Area -->
+        <div class="canvas-wrapper card" id="canvasContainer">
+          <canvas id="drawingCanvas"></canvas>
+          <div class="canvas-Submitted-overlay" id="submittedOverlay" hidden>
+            <div class="submitted-box">
+              <span class="big-emoji">🎨✨</span>
+              <h3>הציור שלך נשלח בהצלחה!</h3>
+              <p>ממתינים ששאר השחקנים יסיימו או שהטיימר יגיע ל-0...</p>
+              <button class="btn btn-secondary btn-small" id="editDrawingAgainBtn">✏️ חזור לערוך ציור</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 4. VOTING & GALLERY REVEAL SCREEN ==================== -->
+    <section id="screenVoting" class="screen" hidden>
+      <div class="voting-header card">
+        <div>
+          <span class="badge-accent">🖼️ תערוכת הציורים ושלב הדירוגים</span>
+          <h2>הנושא היה: <span id="votingPromptTitle" class="highlight-prompt"></span></h2>
+          <p class="muted-text">דרגו את הציור של כל אחד מהמשתתפים מ-1 עד 5 כוכבים ⭐ ושלחו אימוג'ים!</p>
+        </div>
+        <div class="voting-header-actions">
+          <button class="btn btn-primary btn-large" id="finishVotingBtn">
+            🏆 חשב ציונים והצג מנצחים!
+          </button>
+        </div>
+      </div>
+
+      <!-- Gallery Grid of Everyone's Drawings -->
+      <div id="galleryGrid" class="gallery-grid"></div>
+    </section>
+
+    <!-- ==================== 5. RESULTS / PODIUM LEADERBOARD SCREEN ==================== -->
+    <section id="screenResults" class="screen" hidden>
+      <div class="results-card card">
+        <div class="results-header">
+          <span class="badge-gold">🏆 סיכום ציונים ודירוגים</span>
+          <h2>המנצחים של סיבוב <span id="resultsRoundNum">1</span>!</h2>
+          <p class="muted-text">נושא הציור: <strong id="resultsPromptTitle"></strong></p>
+        </div>
+
+        <!-- Podium & Ranked Drawings -->
+        <div id="resultsPodiumGrid" class="results-podium-grid"></div>
+
+        <!-- Overall Scoreboard Table -->
+        <div class="scoreboard-section">
+          <h3>📊 טבלת ניקוד מצטברת</h3>
+          <div id="scoreboardList" class="scoreboard-list"></div>
+        </div>
+
+        <!-- Next Round Controls -->
+        <div class="results-footer">
+          <div class="next-round-box" id="hostNextRoundControls">
+            <button class="btn btn-primary btn-XL" id="nextRoundBtn">
+              🎨 סיבוב הבא עם נושא חדש!
+            </button>
+            <button class="btn btn-secondary" id="backToLobbyBtn">
+              🏠 חזרה להגדרות הלובי
+            </button>
+          </div>
+          <p id="resultsGuestWait" class="muted-text" hidden>
+            ממתין למנהל החדר שיתחיל את הסיבוב הבא...
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="canvas.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

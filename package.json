@@ -1,0 +1,15 @@
+{
+  "name": "draw-it-rea",
+  "version": "1.0.0",
+  "description": "Multiplayer Draw It party game - Lobby, Timed Prompt Drawing, Gallery Reveal & Live Star Ratings (Reconstructed via REA)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}
